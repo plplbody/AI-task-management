@@ -1,34 +1,47 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import './App.css'
+import { useState } from 'react';
+import TaskList from './components/TaskList';
+import type { Task } from './types';
+import styled from 'styled-components';
+
+const AppContainer = styled.div`
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+`;
+
+const Header = styled.header`
+  h1 {
+    font-size: 2.5em;
+    line-height: 1.1;
+    margin-bottom: 1.5rem;
+  }
+`;
+
+const initialTasks: Task[] = [
+  { id: 'task-1', title: 'Design new user interface mockups', status: 'In Progress', assignee: 'Alice' },
+  { id: 'task-2', title: 'Develop user authentication feature', status: 'Todo', assignee: 'Bob' },
+  { id: 'task-3', title: 'Set up CI/CD pipeline', status: 'Done', assignee: 'Charlie' },
+  { id: 'task-4', title: 'Write API documentation', status: 'Todo' },
+  { id: 'task-5', title: 'Test cross-browser compatibility', status: 'In Progress', assignee: 'Alice' },
+];
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [tasks, setTasks] = useState<Task[]>(initialTasks);
+
+  // In the future, you can add functions here to handle task updates.
+  // e.g., addTask, updateTaskStatus, etc.
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src="/vite.svg" className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>frontend/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <AppContainer>
+      <Header>
+        <h1>Project Tasks</h1>
+      </Header>
+      <main>
+        <TaskList tasks={tasks} />
+      </main>
+    </AppContainer>
+  );
 }
 
-export default App
+export default App;
