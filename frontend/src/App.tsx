@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import TaskList from './components/TaskList';
 import type { Task } from './types';
 import styled from 'styled-components';
@@ -18,19 +18,22 @@ const Header = styled.header`
   }
 `;
 
-const initialTasks: Task[] = [
-  { id: 'task-1', title: 'Design new user interface mockups', status: 'In Progress', assignee: 'Alice' },
-  { id: 'task-2', title: 'Develop user authentication feature', status: 'Todo', assignee: 'Bob' },
-  { id: 'task-3', title: 'Set up CI/CD pipeline', status: 'Done', assignee: 'Charlie' },
-  { id: 'task-4', title: 'Write API documentation', status: 'Todo' },
-  { id: 'task-5', title: 'Test cross-browser compatibility', status: 'In Progress', assignee: 'Alice' },
-];
-
 function App() {
-  const [tasks, setTasks] = useState<Task[]>(initialTasks);
+  const [tasks, setTasks] = useState<Task[]>([]);
 
-  // In the future, you can add functions here to handle task updates.
-  // e.g., addTask, updateTaskStatus, etc.
+  useEffect(() => {
+    const fetchTasks = async () => {
+      try {
+        const response = await fetch('http://localhost:3001/api/tasks');
+        const data = await response.json();
+        setTasks(data);
+      } catch (error) {
+        console.error('Error fetching tasks:', error);
+      }
+    };
+
+    fetchTasks();
+  }, []);
 
   return (
     <AppContainer>
