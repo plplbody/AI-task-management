@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import type { Task, Header } from '../types';
-import TaskItem from './TaskItem';
+import React, { useState, useRef, useEffect } from 'react';
+import type { Task, Header } from '../../types';
+import TaskItem from '../molecules/TaskItem';
 import styled from 'styled-components';
+import { AddButton, DropdownButton } from '../atoms/Button';
 
 const TableContainer = styled.div`
   margin-top: 2rem;
@@ -9,37 +10,52 @@ const TableContainer = styled.div`
 
 const ActionContainer = styled.div`
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
+  align-items: center;
   margin-bottom: 1rem;
 `;
 
-const Button = styled.button`
-  color: white;
-  border: none;
-  padding: 10px 20px;
+const FooterActionContainer = styled.div`
+  margin-top: 1rem;
+`;
+
+const DropdownContainer = styled.div`
+  position: relative;
+  display: inline-block;
+`;
+
+const DropdownMenu = styled.div`
+  display: block;
+  position: absolute;
+  background-color: #f9f9f9;
+  min-width: 220px;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  z-index: 1;
   border-radius: 5px;
+  overflow: hidden;
+  right: 0; 
+`;
+
+const DropdownItem = styled.button`
+  color: #5F5F5F;
+  padding: 12px 16px;
+  text-decoration: none;
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
   cursor: pointer;
-  font-size: 1rem;
-  font-weight: 500;
-  transition: opacity 0.2s;
 
   &:hover {
-    opacity: 0.85;
+    background-color: #f1f1f1;
   }
 
   &:disabled {
-    background-color: #BDBDBD;
+    color: #BDBDBD;
     cursor: not-allowed;
-    opacity: 0.5;
+    background-color: #f9f9f9;
   }
-`;
-
-const DeleteButton = styled(Button)`
-  background-color: #FFC000; /* Orange */
-`;
-
-const AddButton = styled(Button)`
-  background-color: #70AD47; /* Green */
 `;
 
 const StyledTable = styled.table`
@@ -54,10 +70,11 @@ const StyledTable = styled.table`
 
 const Th = styled.th`
   padding: 16px 20px;
-  background-color: #4472C4; /* Blue */
+  background-color: #425679; /* Blue */
   color: white;
   font-weight: 600;
   cursor: pointer;
+  font-size: 1rem;
 `;
 
 const Tr = styled.tr`
@@ -83,6 +100,20 @@ interface TaskListProps {
 const TaskList: React.FC<TaskListProps> = ({ tasks, headers, selectedTaskIds, onUpdateTask, onUpdateHeader, onAddTask, onDeleteTasks, setSelectedTaskIds }) => {
   const [editingHeaderId, setEditingHeaderId] = useState<number | null>(null);
   const [headerLabel, setHeaderLabel] = useState('');
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [dropdownRef]);
 
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
@@ -108,13 +139,26 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, headers, selectedTaskIds, on
     }
   };
 
+  const handleDeleteClick = () => {
+    onDeleteTasks();
+    setIsMenuOpen(false);
+  };
+
   return (
     <TableContainer>
       <ActionContainer>
-        <DeleteButton onClick={onDeleteTasks} disabled={selectedTaskIds.size === 0}>
-          Delete Selected ({selectedTaskIds.size})
-        </DeleteButton>
-        <AddButton onClick={onAddTask}>Add New Task</AddButton>
+        <DropdownContainer ref={dropdownRef}>
+          <DropdownButton onClick={() => setIsMenuOpen(prev => !prev)}>
+            ▼タスクの操作
+          </DropdownButton>
+          {isMenuOpen && (
+            <DropdownMenu>
+              <DropdownItem onClick={handleDeleteClick} disabled={selectedTaskIds.size === 0}>
+                Delete Selected ({selectedTaskIds.size})
+              </DropdownItem>
+            </DropdownMenu>
+          )}
+        </DropdownContainer>
       </ActionContainer>
       <StyledTable>
         <thead>
@@ -160,6 +204,9 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, headers, selectedTaskIds, on
           ))}
         </tbody>
       </StyledTable>
+      <FooterActionContainer>
+        <AddButton onClick={onAddTask}>+ タスクの追加</AddButton>
+      </FooterActionContainer>
     </TableContainer>
   );
 };

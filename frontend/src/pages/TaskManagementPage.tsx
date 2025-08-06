@@ -1,9 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
-import TaskList from './components/TaskList';
-import type { Task, Header as HeaderType } from './types';
-import { AppContainer, Header } from './AppStyles';
+import styled from 'styled-components';
+import TaskList from '../components/organisms/TaskList';
+import PageHeader from '../components/organisms/PageHeader';
+import type { Task, Header as HeaderType } from '../types';
+import { AppContainer } from '../AppStyles';
 
-function App() {
+const MainContent = styled.main`
+  padding: 2rem;
+`;
+
+function TaskManagementPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [headers, setHeaders] = useState<HeaderType[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -124,12 +130,10 @@ function App() {
 
   return (
     <AppContainer>
-      <Header>
-        <h1>Project Task Management</h1>
-      </Header>
-      <main>{renderContent()}</main>
+      <PageHeader />
+      <MainContent>{renderContent()}</MainContent>
     </AppContainer>
   );
 }
 
-export default App;
+export default TaskManagementPage;
