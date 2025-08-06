@@ -1,14 +1,20 @@
 import React, { useState } from 'react';
-import type { Task, Header } from '../../types';
+import type { Task } from '../../types';
 import styled from 'styled-components';
 import { Input } from '../atoms/Input';
-import { StatusSelect } from '../atoms/Select';
+import CustomStatusSelect from './CustomStatusSelect';
 
 const Td = styled.td`
   padding: 12px 20px;
   border-bottom: 1px solid #DEE2E6;
   vertical-align: middle;
 `;
+
+interface Header {
+  id: number;
+  column_key: string;
+  label: string;
+}
 
 interface TaskItemProps {
   task: Task;
@@ -21,7 +27,7 @@ interface TaskItemProps {
 const TaskItem: React.FC<TaskItemProps> = ({ task, headers, isSelected, onUpdateTask, onSelect }) => {
   const [editingTask, setEditingTask] = useState<Task>(task);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     const originalValue = task[name as keyof Task];
     const isNumber = typeof originalValue === 'number';
@@ -30,6 +36,12 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, headers, isSelected, onUpdate
       ...prev,
       [name]: isNumber ? (value === '' ? undefined : Number(value)) : value,
     }));
+  };
+
+  const handleStatusChange = (newStatus: Task['status']) => {
+    const updatedTask = { ...editingTask, status: newStatus };
+    setEditingTask(updatedTask);
+    onUpdateTask(updatedTask);
   };
 
   const handleBlur = () => {
@@ -44,11 +56,10 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, headers, isSelected, onUpdate
 
     if (key === 'status') {
       return (
-        <StatusSelect name="status" value={value as string} onChange={handleChange} onBlur={handleBlur} status={value as Task['status']}>
-          <option value="Todo">Todo</option>
-          <option value="In Progress">In Progress</option>
-          <option value="Done">Done</option>
-        </StatusSelect>
+        <CustomStatusSelect
+          value={value as Task['status']}
+          onChange={handleStatusChange}
+        />
       );
     }
 

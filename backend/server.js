@@ -70,33 +70,6 @@ app.post('/api/tasks/delete', async (req, res) => {
   }
 });
 
-// Get all table headers
-app.get('/api/headers', async (req, res) => {
-  try {
-    const result = await pool.query('SELECT * FROM table_headers ORDER BY id');
-    res.json(result.rows);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server error');
-  }
-});
-
-// Update a table header
-app.put('/api/headers/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { label } = req.body;
-    const result = await pool.query(
-      'UPDATE table_headers SET label = $1 WHERE id = $2 RETURNING *',
-      [label, id]
-    );
-    res.json(result.rows[0]);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server error');
-  }
-});
-
 app.listen(port, () => {
   console.log(`Backend server listening at http://localhost:${port}`);
 });

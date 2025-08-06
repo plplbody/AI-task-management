@@ -7,9 +7,3 @@ export interface Task {
   planned_effort?: number;
   actual_effort?: number;
 }
-
-export interface Header {
-  id: number;
-  column_key: string;
-  label: string;
-}

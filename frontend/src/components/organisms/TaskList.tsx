@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import type { Task, Header } from '../../types';
+import type { Task } from '../../types';
 import TaskItem from '../molecules/TaskItem';
 import styled from 'styled-components';
 import { AddButton, DropdownButton } from '../atoms/Button';
@@ -66,6 +66,7 @@ const StyledTable = styled.table`
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   border-radius: 8px;
   overflow: hidden;
+  table-layout: fixed;
 `;
 
 const Th = styled.th`
@@ -73,7 +74,6 @@ const Th = styled.th`
   background-color: #425679; /* Blue */
   color: white;
   font-weight: 600;
-  cursor: pointer;
   font-size: 1rem;
 `;
 
@@ -86,20 +86,23 @@ const Tr = styled.tr`
   }
 `;
 
+interface Header {
+  id: number;
+  column_key: string;
+  label: string;
+}
+
 interface TaskListProps {
   tasks: Task[];
   headers: Header[];
   selectedTaskIds: Set<string>;
   onUpdateTask: (task: Task) => void;
-  onUpdateHeader: (header: Header) => void;
   onAddTask: () => void;
   onDeleteTasks: () => void;
   setSelectedTaskIds: React.Dispatch<React.SetStateAction<Set<string>>>;
 }
 
-const TaskList: React.FC<TaskListProps> = ({ tasks, headers, selectedTaskIds, onUpdateTask, onUpdateHeader, onAddTask, onDeleteTasks, setSelectedTaskIds }) => {
-  const [editingHeaderId, setEditingHeaderId] = useState<number | null>(null);
-  const [headerLabel, setHeaderLabel] = useState('');
+const TaskList: React.FC<TaskListProps> = ({ tasks, headers, selectedTaskIds, onUpdateTask, onAddTask, onDeleteTasks, setSelectedTaskIds }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -123,25 +126,25 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, headers, selectedTaskIds, on
     }
   };
 
-  const handleHeaderClick = (header: Header) => {
-    setEditingHeaderId(header.id);
-    setHeaderLabel(header.label);
-  };
-
-  const handleHeaderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setHeaderLabel(e.target.value);
-  };
-
-  const handleHeaderBlur = (header: Header) => {
-    setEditingHeaderId(null);
-    if (header.label !== headerLabel) {
-      onUpdateHeader({ ...header, label: headerLabel });
-    }
-  };
-
   const handleDeleteClick = () => {
     onDeleteTasks();
     setIsMenuOpen(false);
+  };
+
+  const getColumnWidth = (columnKey: string): string => {
+    switch (columnKey) {
+      case 'title':
+        return 'auto'; // Long
+      case 'assignee':
+      case 'planned_start_date':
+        return '180px'; // Medium
+      case 'status':
+      case 'planned_effort':
+      case 'actual_effort':
+        return '120px'; // Short
+      default:
+        return 'auto';
+    }
   };
 
   return (
@@ -163,22 +166,12 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, headers, selectedTaskIds, on
       <StyledTable>
         <thead>
           <Tr>
-            <Th style={{ width: '40px' }}>
+            <Th style={{ width: '60px' }}>
               <input type="checkbox" onChange={handleSelectAll} checked={tasks.length > 0 && selectedTaskIds.size === tasks.length} />
             </Th>
             {headers.map(header => (
-              <Th key={header.id} onClick={() => handleHeaderClick(header)}>
-                {editingHeaderId === header.id ? (
-                  <input
-                    type="text"
-                    value={headerLabel}
-                    onChange={handleHeaderChange}
-                    onBlur={() => handleHeaderBlur(header)}
-                    autoFocus
-                  />
-                ) : (
-                  header.label
-                )}
+              <Th key={header.id} style={{ width: getColumnWidth(header.column_key) }}>
+                {header.label}
               </Th>
             ))}
           </Tr>
