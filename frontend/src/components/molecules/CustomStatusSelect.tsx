@@ -33,6 +33,7 @@ const DropdownButton = styled.button<{ status: Task['status'] }>`
 
 const DropdownMenu = styled.div`
   position: absolute;
+  font-size:0.8rem;
   top: 100%;
   left: 0;
   width: 100%;
