@@ -1,13 +1,22 @@
-import React, { useState } from 'react';
-import type { Task } from '../../types';
+import React, { useState, Fragment } from 'react';
+import type { Task, Subtask } from '../../types';
 import styled from 'styled-components';
 import { Input } from '../atoms/Input';
+import { Button } from '../atoms/Button';
 import CustomStatusSelect from './CustomStatusSelect';
+import SubtaskList from './SubtaskList';
 
 const Td = styled.td`
   padding: 12px 20px;
   border-bottom: 1px solid #DEE2E6;
   vertical-align: middle;
+`;
+
+const SubtaskToggleButton = styled(Button)`
+  background-color: transparent;
+  color: #5F5F5F;
+  padding: 4px 8px;
+  font-size: 0.75rem;
 `;
 
 interface Header {
@@ -22,9 +31,25 @@ interface TaskItemProps {
   isSelected: boolean;
   onUpdateTask: (task: Task) => void;
   onSelect: (id: string) => void;
+  onToggleSubtasks: (taskId: string) => void;
+  onAddSubtask: (taskId: string, title: string) => void;
+  onUpdateSubtask: (subtask: Subtask) => void;
+  onDeleteSubtask: (subtaskId: string) => void;
+  showSubtasks: boolean;
 }
 
-const TaskItem: React.FC<TaskItemProps> = ({ task, headers, isSelected, onUpdateTask, onSelect }) => {
+const TaskItem: React.FC<TaskItemProps> = ({ 
+  task, 
+  headers, 
+  isSelected, 
+  onUpdateTask, 
+  onSelect, 
+  onToggleSubtasks,
+  onAddSubtask,
+  onUpdateSubtask,
+  onDeleteSubtask,
+  showSubtasks 
+}) => {
   const [editingTask, setEditingTask] = useState<Task>(task);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -67,7 +92,7 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, headers, isSelected, onUpdate
       <Input
         type={key.includes('date') ? 'date' : typeof task[key] === 'number' ? 'number' : 'text'}
         name={key}
-        value={value ?? ''}
+        value={typeof value === 'string' || typeof value === 'number' ? value : ''}
         onChange={handleChange}
         onBlur={handleBlur}
       />
@@ -75,14 +100,34 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, headers, isSelected, onUpdate
   };
 
   return (
-    <tr>
-      <Td>
-        <input type="checkbox" checked={isSelected} onChange={() => onSelect(task.id)} />
-      </Td>
-      {headers.map(header => (
-        <Td key={header.id}>{renderCell(header)}</Td>
-      ))}
-    </tr>
+    <Fragment>
+      <tr>
+        <Td>
+          <input type="checkbox" checked={isSelected} onChange={() => onSelect(task.id)} />
+        </Td>
+        <Td>
+          <SubtaskToggleButton onClick={() => onToggleSubtasks(task.id)}>
+            {showSubtasks ? '▼' : '▶'}
+          </SubtaskToggleButton>
+        </Td>
+        {headers.filter(h => h.column_key !== 'select' && h.column_key !== 'subtask_toggle').map(header => (
+          <Td key={header.id}>{renderCell(header)}</Td>
+        ))}
+      </tr>
+      {showSubtasks && (
+        <tr>
+          <Td colSpan={headers.length}>
+            <SubtaskList
+              taskId={task.id}
+              subtasks={task.subtasks || []}
+              onAddSubtask={onAddSubtask}
+              onUpdateSubtask={onUpdateSubtask}
+              onDeleteSubtask={onDeleteSubtask}
+            />
+          </Td>
+        </tr>
+      )}
+    </Fragment>
   );
 };
 

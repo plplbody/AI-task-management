@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import type { Task } from '../../types';
+import type { Task, Subtask } from '../../types';
 import TaskItem from '../molecules/TaskItem';
 import styled from 'styled-components';
 import { AddButton, DropdownButton } from '../atoms/Button';
@@ -99,9 +99,27 @@ interface TaskListProps {
   onAddTask: () => void;
   onDeleteTasks: () => void;
   setSelectedTaskIds: React.Dispatch<React.SetStateAction<Set<string>>>;
+  expandedTasks: Set<string>;
+  onToggleSubtasks: (taskId: string) => void;
+  onAddSubtask: (taskId: string, title: string) => void;
+  onUpdateSubtask: (subtask: Subtask) => void;
+  onDeleteSubtask: (subtaskId: string) => void;
 }
 
-const TaskList: React.FC<TaskListProps> = ({ tasks, headers, selectedTaskIds, onUpdateTask, onAddTask, onDeleteTasks, setSelectedTaskIds }) => {
+const TaskList: React.FC<TaskListProps> = ({ 
+  tasks, 
+  headers, 
+  selectedTaskIds, 
+  onUpdateTask, 
+  onAddTask, 
+  onDeleteTasks, 
+  setSelectedTaskIds, 
+  expandedTasks, 
+  onToggleSubtasks, 
+  onAddSubtask, 
+  onUpdateSubtask, 
+  onDeleteSubtask 
+}) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -132,6 +150,10 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, headers, selectedTaskIds, on
 
   const getColumnWidth = (columnKey: string): string => {
     switch (columnKey) {
+      case 'select':
+        return '1%';
+      case 'subtask_toggle':
+        return '1%';
       case 'title':
         return 'auto';
       case 'assignee':
@@ -168,12 +190,13 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, headers, selectedTaskIds, on
       <StyledTable>
         <thead>
           <Tr>
-            <Th style={{ width: '1%' }}>
-              <input type="checkbox" onChange={handleSelectAll} checked={tasks.length > 0 && selectedTaskIds.size === tasks.length} />
-            </Th>
             {headers.map(header => (
               <Th key={header.id} style={{ width: getColumnWidth(header.column_key) }}>
-                {header.label}
+                {header.column_key === 'select' ? (
+                  <input type="checkbox" onChange={handleSelectAll} checked={tasks.length > 0 && selectedTaskIds.size === tasks.length} />
+                ) : (
+                  header.label
+                )}
               </Th>
             ))}
           </Tr>
@@ -195,6 +218,11 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, headers, selectedTaskIds, on
                 }
                 setSelectedTaskIds(newSelection);
               }}
+              showSubtasks={expandedTasks.has(task.id)}
+              onToggleSubtasks={onToggleSubtasks}
+              onAddSubtask={onAddSubtask}
+              onUpdateSubtask={onUpdateSubtask}
+              onDeleteSubtask={onDeleteSubtask}
             />
           ))}
         </tbody>

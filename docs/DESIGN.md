@@ -16,7 +16,7 @@
 
 ## 2. システム概要 (System Overview)
 
-タスクの進捗管理を行うための、シングルページアプリケーション（SPA）です。主な機能として、タスクの一覧表示、インラインでのタスク編集、新規タスクの追加、複数タスクの一括削除、テーブルヘッダーのラベル編集機能を提供します。
+タスクの進捗管理を行うための、シングルページアプリケーション（SPA）です。主な機能として、タスクの一覧表示、インラインでのタスク編集、新規タスクの追加、複数タスクの一括削除、テーブルヘッダーのラベル編集機能、そして**各タスクに紐づくサブタスクの管理機能**を提供します。
 
 ## 3. アーキテクチャ (Architecture)
 
@@ -71,9 +71,16 @@ graph TD
 
 #### Molecules
 
+-   **`CustomStatusSelect.tsx`**: タスクのステータスを選択するためのドロップダウン。
 -   **`TaskItem.tsx`**
     -   **責務**: 1つのタスク行の表示と、その行内での編集機能に専念します。
     -   **役割**: propsで渡された1つのタスク情報を基に、各セルを描画します。入力が行われると、自身のstate (`editingTask`) を一時的に更新し、入力が完了（`onBlur`イベント）した時点で、propsで渡された`onUpdateTask`関数を呼び出して、親コンポーネントに変更を通知します。
+-   **`SubtaskItem.tsx`**
+    -   **責務**: 1つのサブタスクの表示と、その行内での編集機能に専念します。
+    -   **役割**: propsで渡された1つのサブタスク情報を基に、チェックボックスとタイトルを描画します。入力が行われると、propsで渡された`onUpdate`関数を呼び出して、親コンポーネントに変更を通知します。
+-   **`SubtaskList.tsx`**
+    -   **責務**: 特定のタスクに紐づくサブタスクのリスト表示と、新規サブタスクの追加機能に専念します。
+    -   **役割**: `SubtaskItem`コンポーネントを複数レンダリングし、サブタスクの追加・更新・削除に関するイベントハンドラを親コンポーネントから受け取り、子コンポーネントに渡します。
 
 #### Atoms
 
@@ -126,10 +133,19 @@ graph TD
 
 ### 5.2. APIエンドポイント詳細
 
-*   `GET /api/tasks`: 全タスクを取得。単純なSELECT文で全件を返す。
-*   `POST /api/tasks`: 新規タスクを作成。IDをサーバーサイドで生成し、固定の初期値（タイトル: 'New Task', ステータス: 'Todo'）でレコードを挿入後、作成されたレコードを返す。
-*   `PUT /api/tasks/:id`: 既存タスクを更新。リクエストボディで受け取った全項目でレコードを上書きする。
-*   `POST /api/tasks/delete`: 複数タスクを削除。リクエストボディのID配列 (`ids`) を使い、`DELETE ... WHERE id = ANY($1)` 構文で効率的に一括削除する。
+#### Tasks
+*   `GET /api/tasks`: 全タスクを取得。
+*   `POST /api/tasks`: 新規タスクを作成。
+*   `PUT /api/tasks/:id`: 既存タスクを更新。
+*   `POST /api/tasks/delete`: 複数タスクを一括削除。
+
+#### Subtasks
+*   `GET /api/tasks/:taskId/subtasks`: 特定のタスクに紐づく全サブタスクを取得。
+*   `POST /api/subtasks`: 新規サブタスクを作成。
+*   `PUT /api/subtasks/:id`: 既存サブタスクを更新（タイトル、完了状態）。
+*   `DELETE /api/subtasks/:id`: サブタスクを削除。
+
+#### Table Headers
 *   `GET /api/headers`: 全ヘッダー定義を取得。
 *   `PUT /api/headers/:id`: ヘッダーラベルを更新。
 
@@ -137,8 +153,9 @@ graph TD
 
 ### 6.1. テーブル設計の意図
 
-*   **`tasks`**: タスク管理のコアとなるテーブル。`planned_effort`（予定工数）と`actual_effort`（実績工数）を分けることで、予実管理を可能にするなど、基本的な拡張性を持たせています。
-*   **`table_headers`**: なぜこのテーブルが必要か？当初はフロントエンドにヘッダーをハードコーディングしていましたが、ユーザーがラベルを自由に変更できる機能の要望に応えるため、ヘッダー定義をDBで管理する方式に変更しました。`column_key`がプログラム上のキー、`label`が表示用の文字列という役割分担です。
+*   **`tasks`**: タスク管理のコアとなるテーブル。
+*   **`subtasks`**: 各タスクに紐づくサブタスクを管理するテーブル。親タスクが削除された場合は、関連するサブタスクも自動的に削除されるように設定。
+*   **`table_headers`**: フロントエンドで表示されるテーブルのヘッダー情報を管理。
 
 ### 6.2. テーブルスキーマ
 
@@ -154,12 +171,14 @@ graph TD
         actual_effort INT
     );
     ```
-*   **table_headers**
+*   **subtasks**
     ```sql
-    CREATE TABLE table_headers (
-        id SERIAL PRIMARY KEY,
-        column_key VARCHAR(255) UNIQUE NOT NULL,
-        label VARCHAR(255) NOT NULL
+    CREATE TABLE subtasks (
+        id VARCHAR(255) PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        completed BOOLEAN NOT NULL DEFAULT FALSE,
+        task_id VARCHAR(255) NOT NULL,
+        FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
     );
     ```
 

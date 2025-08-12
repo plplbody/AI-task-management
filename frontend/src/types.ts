@@ -1,3 +1,10 @@
+export interface Subtask {
+  id: string;
+  task_id: string;
+  title: string;
+  completed: boolean;
+}
+
 export interface Task {
   id: string;
   title: string;
@@ -6,4 +13,5 @@ export interface Task {
   planned_start_date?: string;
   planned_effort?: number;
   actual_effort?: number;
+  subtasks?: Subtask[];
 }
