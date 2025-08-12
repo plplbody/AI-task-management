@@ -133,14 +133,17 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, headers, selectedTaskIds, on
   const getColumnWidth = (columnKey: string): string => {
     switch (columnKey) {
       case 'title':
-        return 'auto'; // Long
+        return 'auto';
       case 'assignee':
+        return '10%';
       case 'planned_start_date':
-        return '180px'; // Medium
+        return '10%';
       case 'status':
+        return '7%';
       case 'planned_effort':
+        return '5%';
       case 'actual_effort':
-        return '120px'; // Short
+        return '5%';
       default:
         return 'auto';
     }
@@ -165,7 +168,7 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, headers, selectedTaskIds, on
       <StyledTable>
         <thead>
           <Tr>
-            <Th style={{ width: '60px' }}>
+            <Th style={{ width: '1%' }}>
               <input type="checkbox" onChange={handleSelectAll} checked={tasks.length > 0 && selectedTaskIds.size === tasks.length} />
             </Th>
             {headers.map(header => (
