@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import type { Subtask } from '../../types';
 import SubtaskItem from './SubtaskItem';
-import { Input } from '../atoms/Input';
-import { AddButton } from '../atoms/Button';
+import { AddButton, DeleteButton } from '../atoms/Button';
 
 const SubtaskListContainer = styled.div`
   padding: 10px;
@@ -12,9 +11,11 @@ const SubtaskListContainer = styled.div`
   margin-top: 10px;
 `;
 
-const AddSubtaskContainer = styled.div`
+const FooterActionContainer = styled.div`
   display: flex;
-  margin-top: 10px;
+  justify-content: flex-start;
+  gap: 10px;
+  margin-top: 1rem;
 `;
 
 interface SubtaskListProps {
@@ -23,18 +24,21 @@ interface SubtaskListProps {
   onAddSubtask: (taskId: string, title: string) => void;
   onUpdateSubtask: (subtask: Subtask) => void;
   onDeleteSubtask: (subtaskId: string) => void;
+  onSelectSubtask: (taskId: string, subtaskId: string, isSelected: boolean) => void;
+  onDeleteSelectedSubtasks: (taskId: string) => void;
+  selectedSubtaskIds: Map<string, Set<string>>;
 }
 
-const SubtaskList: React.FC<SubtaskListProps> = ({ taskId, subtasks, onAddSubtask, onUpdateSubtask, onDeleteSubtask }) => {
-  const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
-
-  const handleAddClick = () => {
-    if (newSubtaskTitle.trim()) {
-      onAddSubtask(taskId, newSubtaskTitle.trim());
-      setNewSubtaskTitle('');
-    }
-  };
-
+const SubtaskList: React.FC<SubtaskListProps> = ({ 
+  taskId, 
+  subtasks, 
+  onAddSubtask, 
+  onUpdateSubtask, 
+  onDeleteSubtask, 
+  onSelectSubtask, 
+  onDeleteSelectedSubtasks, 
+  selectedSubtaskIds 
+}) => {
   return (
     <SubtaskListContainer>
       {subtasks.map(subtask => (
@@ -43,18 +47,19 @@ const SubtaskList: React.FC<SubtaskListProps> = ({ taskId, subtasks, onAddSubtas
           subtask={subtask}
           onUpdate={onUpdateSubtask}
           onDelete={onDeleteSubtask}
+          onSelect={(subtaskId, isSelected) => onSelectSubtask(taskId, subtaskId, isSelected)}
+          isSelected={selectedSubtaskIds && selectedSubtaskIds.get(taskId)?.has(subtask.id) || false}
         />
       ))}
-      <AddSubtaskContainer>
-        <Input
-          type="text"
-          value={newSubtaskTitle}
-          onChange={(e) => setNewSubtaskTitle(e.target.value)}
-          placeholder="Add a new subtask"
-          style={{ flex: 1, marginRight: '10px' }}
-        />
-        <AddButton onClick={handleAddClick}>Add</AddButton>
-      </AddSubtaskContainer>
+      <FooterActionContainer>
+        <AddButton onClick={() => onAddSubtask(taskId, 'New Subtask')}>+ サブタスクの追加</AddButton>
+        <DeleteButton 
+          onClick={() => onDeleteSelectedSubtasks(taskId)} 
+          disabled={!selectedSubtaskIds || !selectedSubtaskIds.has(taskId) || selectedSubtaskIds.get(taskId)?.size === 0}
+        >
+          サブタスクの削除 ({selectedSubtaskIds && selectedSubtaskIds.get(taskId)?.size || 0})
+        </DeleteButton>
+      </FooterActionContainer>
     </SubtaskListContainer>
   );
 };

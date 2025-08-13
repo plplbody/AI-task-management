@@ -14,20 +14,15 @@ const Checkbox = styled.input`
   margin-right: 10px;
 `;
 
-const DeleteButton = styled(Button)`
-  background-color: #dc3545;
-  padding: 2px 6px;
-  font-size: 0.7rem;
-  margin-left: 10px;
-`;
-
 interface SubtaskItemProps {
   subtask: Subtask;
   onUpdate: (subtask: Subtask) => void;
   onDelete: (subtaskId: string) => void;
+  onSelect: (subtaskId: string, isSelected: boolean) => void;
+  isSelected: boolean;
 }
 
-const SubtaskItem: React.FC<SubtaskItemProps> = ({ subtask, onUpdate, onDelete }) => {
+const SubtaskItem: React.FC<SubtaskItemProps> = ({ subtask, onUpdate, onDelete, onSelect, isSelected }) => {
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onUpdate({ ...subtask, title: e.target.value });
   };
@@ -36,9 +31,13 @@ const SubtaskItem: React.FC<SubtaskItemProps> = ({ subtask, onUpdate, onDelete }
     onUpdate({ ...subtask, completed: e.target.checked });
   };
 
+  const handleSelectionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onSelect(subtask.id, e.target.checked);
+  };
+
   return (
     <SubtaskItemContainer>
-      <Checkbox type="checkbox" checked={subtask.completed} onChange={handleCompletedChange} />
+      <Checkbox type="checkbox" checked={isSelected} onChange={handleSelectionChange} />
       <Input
         type="text"
         value={subtask.title}
@@ -46,7 +45,6 @@ const SubtaskItem: React.FC<SubtaskItemProps> = ({ subtask, onUpdate, onDelete }
         onBlur={() => onUpdate(subtask)} // Save on blur
         style={{ flex: 1, fontSize: '0.9rem', padding: '4px 8px' }}
       />
-      <DeleteButton onClick={() => onDelete(subtask.id)}>Delete</DeleteButton>
     </SubtaskItemContainer>
   );
 };

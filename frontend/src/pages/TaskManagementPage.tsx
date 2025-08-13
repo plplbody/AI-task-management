@@ -26,6 +26,7 @@ function TaskManagementPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(new Set());
   const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
+  const [selectedSubtaskIds, setSelectedSubtaskIds] = useState<Map<string, Set<string>>>(new Map());
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -49,6 +50,20 @@ function TaskManagementPage() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  const handleSelectSubtask = useCallback((taskId: string, subtaskId: string, isSelected: boolean) => {
+    setSelectedSubtaskIds(prev => {
+      const newMap = new Map(prev);
+      const subtaskSet = newMap.get(taskId) || new Set();
+      if (isSelected) {
+        subtaskSet.add(subtaskId);
+      } else {
+        subtaskSet.delete(subtaskId);
+      }
+      newMap.set(taskId, subtaskSet);
+      return newMap;
+    });
+  }, []);
 
   const handleUpdateTask = async (updatedTask: Task) => {
     try {
@@ -107,6 +122,38 @@ function TaskManagementPage() {
       setSelectedTaskIds(new Set());
     } catch (error) {
       console.error('Error duplicating tasks:', error);
+      setError(error instanceof Error ? error.message : 'An unknown error occurred.');
+    }
+  };
+
+  const handleDeleteSelectedSubtasks = async (taskId: string) => {
+    const subtasksToDelete = selectedSubtaskIds.get(taskId);
+    if (!subtasksToDelete || subtasksToDelete.size === 0) return;
+
+    try {
+      for (const subtaskId of subtasksToDelete) {
+        const response = await fetch(`http://localhost:3001/api/subtasks/${subtaskId}`, { method: 'DELETE' });
+        if (!response.ok) throw new Error(`Failed to delete subtask ${subtaskId}.`);
+      }
+      
+      setTasks(prevTasks => prevTasks.map(task => {
+        if (task.id === taskId) {
+          return {
+            ...task,
+            subtasks: task.subtasks?.filter(st => !subtasksToDelete.has(st.id))
+          };
+        }
+        return task;
+      }));
+      
+      setSelectedSubtaskIds(prev => {
+        const newMap = new Map(prev);
+        newMap.delete(taskId);
+        return newMap;
+      });
+
+    } catch (error) {
+      console.error('Error deleting selected subtasks:', error);
       setError(error instanceof Error ? error.message : 'An unknown error occurred.');
     }
   };
@@ -210,6 +257,9 @@ function TaskManagementPage() {
         onAddSubtask={handleAddSubtask}
         onUpdateSubtask={handleUpdateSubtask}
         onDeleteSubtask={handleDeleteSubtask}
+        onSelectSubtask={handleSelectSubtask}
+        onDeleteSelectedSubtasks={handleDeleteSelectedSubtasks}
+        selectedSubtaskIds={selectedSubtaskIds}
       />
     );
   };

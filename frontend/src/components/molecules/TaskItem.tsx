@@ -41,6 +41,9 @@ interface TaskItemProps {
   onUpdateSubtask: (subtask: Subtask) => void;
   onDeleteSubtask: (subtaskId: string) => void;
   showSubtasks: boolean;
+  onSelectSubtask: (taskId: string, subtaskId: string, isSelected: boolean) => void;
+  onDeleteSelectedSubtasks: (taskId: string) => void;
+  selectedSubtaskIds: Map<string, Set<string>>;
 }
 
 const TaskItem: React.FC<TaskItemProps> = ({ 
@@ -53,7 +56,10 @@ const TaskItem: React.FC<TaskItemProps> = ({
   onAddSubtask,
   onUpdateSubtask,
   onDeleteSubtask,
-  showSubtasks 
+  showSubtasks,
+  onSelectSubtask,
+  onDeleteSelectedSubtasks,
+  selectedSubtaskIds
 }) => {
   const [editingTask, setEditingTask] = useState<Task>(task);
 
@@ -128,6 +134,9 @@ const TaskItem: React.FC<TaskItemProps> = ({
               onAddSubtask={onAddSubtask}
               onUpdateSubtask={onUpdateSubtask}
               onDeleteSubtask={onDeleteSubtask}
+              onSelectSubtask={onSelectSubtask}
+              onDeleteSelectedSubtasks={onDeleteSelectedSubtasks}
+              selectedSubtaskIds={selectedSubtaskIds}
             />
           </Td>
         </tr>

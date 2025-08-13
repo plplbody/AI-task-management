@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import type { Task, Subtask } from '../../types';
 import TaskItem from '../molecules/TaskItem';
 import styled from 'styled-components';
-import { AddButton, Button, DuplicateButton, DeleteButton } from '../atoms/Button';
+import { AddButton, DuplicateButton, DeleteButton } from '../atoms/Button';
 
 const TableContainer = styled.div`
   margin-top: 2rem;
@@ -71,6 +71,9 @@ interface TaskListProps {
   onAddSubtask: (taskId: string, title: string) => void;
   onUpdateSubtask: (subtask: Subtask) => void;
   onDeleteSubtask: (subtaskId: string) => void;
+  onSelectSubtask: (taskId: string, subtaskId: string, isSelected: boolean) => void;
+  onDeleteSelectedSubtasks: (taskId: string) => void;
+  selectedSubtaskIds: Map<string, Set<string>>;
 }
 
 const TaskList: React.FC<TaskListProps> = ({ 
@@ -87,7 +90,10 @@ const TaskList: React.FC<TaskListProps> = ({
   onToggleSubtasks, 
   onAddSubtask, 
   onUpdateSubtask, 
-  onDeleteSubtask 
+  onDeleteSubtask,
+  onSelectSubtask,
+  onDeleteSelectedSubtasks,
+  selectedSubtaskIds
 }) => {
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
@@ -161,6 +167,9 @@ const TaskList: React.FC<TaskListProps> = ({
               onAddSubtask={onAddSubtask}
               onUpdateSubtask={onUpdateSubtask}
               onDeleteSubtask={onDeleteSubtask}
+              onSelectSubtask={onSelectSubtask}
+              onDeleteSelectedSubtasks={onDeleteSelectedSubtasks}
+              selectedSubtaskIds={selectedSubtaskIds}
             />
           ))}
         </tbody>
