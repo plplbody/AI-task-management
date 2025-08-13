@@ -5,7 +5,6 @@ export const Button = styled.button`
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
-  color: white;
   border: none;
   padding: 10px 20px;
   border-radius: 5px;
@@ -14,14 +13,18 @@ export const Button = styled.button`
   font-weight: 500;
   transition: opacity 0.2s;
 
-  &:hover {
-    opacity: 0.85;
-  }
-
   &:disabled {
+    color: white;
     background-color: #BDBDBD;
     cursor: not-allowed;
     opacity: 0.5;
+
+    &:hover{
+      color: white;
+      background-color: #BDBDBD;
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
   }
 `;
 
@@ -31,18 +34,27 @@ export const AddButton = styled(Button)`
   border: 1px solid #DEE2E6;
 
   &:hover {
-    background-color: #F8F9FA;
+    background-color: #E9ECEF;
     opacity: 1;
   }
 `;
 
-export const DropdownButton = styled(Button)`
+export const DuplicateButton = styled(Button)`
   background-color: #FFFFFF;
   color: #5F5F5F;
   border: 1px solid #DEE2E6;
 
   &:hover {
-    background-color: #F8F9FA;
+    background-color: #E9ECEF;
     opacity: 1;
+  }
+`;
+
+export const DeleteButton = styled(Button)`
+  color: #FFF;
+  background-color: #dc3545;
+
+  &:hover {
+    opacity: 0.8;
   }
 `;

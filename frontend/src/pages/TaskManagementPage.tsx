@@ -94,6 +94,23 @@ function TaskManagementPage() {
     }
   };
 
+  const handleDuplicateTasks = async () => {
+    if (selectedTaskIds.size === 0) return;
+    try {
+      const response = await fetch('http://localhost:3001/api/tasks/duplicate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: Array.from(selectedTaskIds) }),
+      });
+      if (!response.ok) throw new Error('Failed to duplicate tasks.');
+      await fetchData(); 
+      setSelectedTaskIds(new Set());
+    } catch (error) {
+      console.error('Error duplicating tasks:', error);
+      setError(error instanceof Error ? error.message : 'An unknown error occurred.');
+    }
+  };
+
   const handleToggleSubtasks = useCallback(async (taskId: string) => {
     const newExpandedTasks = new Set(expandedTasks);
     if (newExpandedTasks.has(taskId)) {
@@ -184,6 +201,8 @@ function TaskManagementPage() {
         onUpdateTask={handleUpdateTask}
         onAddTask={handleAddTask}
         onDeleteTasks={handleDeleteTasks}
+        onDuplicateTasks={handleDuplicateTasks}
+        isDuplicateDisabled={selectedTaskIds.size === 0}
         selectedTaskIds={selectedTaskIds}
         setSelectedTaskIds={setSelectedTaskIds}
         expandedTasks={expandedTasks}

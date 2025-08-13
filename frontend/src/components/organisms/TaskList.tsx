@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import type { Task, Subtask } from '../../types';
 import TaskItem from '../molecules/TaskItem';
 import styled from 'styled-components';
-import { AddButton, DropdownButton } from '../atoms/Button';
+import { AddButton, Button, DuplicateButton, DeleteButton } from '../atoms/Button';
 
 const TableContainer = styled.div`
   margin-top: 2rem;
@@ -16,46 +16,10 @@ const ActionContainer = styled.div`
 `;
 
 const FooterActionContainer = styled.div`
+  display: flex;
+  justify-content: flex-start; /* Align buttons to the left */
+  gap: 10px; /* Space between buttons */
   margin-top: 1rem;
-`;
-
-const DropdownContainer = styled.div`
-  position: relative;
-  display: inline-block;
-`;
-
-const DropdownMenu = styled.div`
-  display: block;
-  position: absolute;
-  background-color: #f9f9f9;
-  min-width: 220px;
-  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-  z-index: 1;
-  border-radius: 5px;
-  overflow: hidden;
-  right: 0; 
-`;
-
-const DropdownItem = styled.button`
-  color: #5F5F5F;
-  padding: 12px 16px;
-  text-decoration: none;
-  display: block;
-  width: 100%;
-  text-align: left;
-  background: none;
-  border: none;
-  cursor: pointer;
-
-  &:hover {
-    background-color: #f1f1f1;
-  }
-
-  &:disabled {
-    color: #BDBDBD;
-    cursor: not-allowed;
-    background-color: #f9f9f9;
-  }
 `;
 
 const StyledTable = styled.table`
@@ -85,6 +49,7 @@ const Tr = styled.tr`
   }
 `;
 
+
 interface Header {
   id: number;
   column_key: string;
@@ -98,6 +63,8 @@ interface TaskListProps {
   onUpdateTask: (task: Task) => void;
   onAddTask: () => void;
   onDeleteTasks: () => void;
+  onDuplicateTasks: () => void;
+  isDuplicateDisabled: boolean;
   setSelectedTaskIds: React.Dispatch<React.SetStateAction<Set<string>>>;
   expandedTasks: Set<string>;
   onToggleSubtasks: (taskId: string) => void;
@@ -113,6 +80,8 @@ const TaskList: React.FC<TaskListProps> = ({
   onUpdateTask, 
   onAddTask, 
   onDeleteTasks, 
+  onDuplicateTasks,
+  isDuplicateDisabled,
   setSelectedTaskIds, 
   expandedTasks, 
   onToggleSubtasks, 
@@ -120,32 +89,12 @@ const TaskList: React.FC<TaskListProps> = ({
   onUpdateSubtask, 
   onDeleteSubtask 
 }) => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [dropdownRef]);
-
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
       setSelectedTaskIds(new Set(tasks.map(t => t.id)));
     } else {
       setSelectedTaskIds(new Set());
     }
-  };
-
-  const handleDeleteClick = () => {
-    onDeleteTasks();
-    setIsMenuOpen(false);
   };
 
   const getColumnWidth = (columnKey: string): string => {
@@ -174,18 +123,7 @@ const TaskList: React.FC<TaskListProps> = ({
   return (
     <TableContainer>
       <ActionContainer>
-        <DropdownContainer ref={dropdownRef}>
-          <DropdownButton onClick={() => setIsMenuOpen(prev => !prev)}>
-            ▼タスクの操作
-          </DropdownButton>
-          {isMenuOpen && (
-            <DropdownMenu>
-              <DropdownItem onClick={handleDeleteClick} disabled={selectedTaskIds.size === 0}>
-                Delete Selected ({selectedTaskIds.size})
-              </DropdownItem>
-            </DropdownMenu>
-          )}
-        </DropdownContainer>
+        {/* No dropdown actions for now */}
       </ActionContainer>
       <StyledTable>
         <thead>
@@ -229,6 +167,12 @@ const TaskList: React.FC<TaskListProps> = ({
       </StyledTable>
       <FooterActionContainer>
         <AddButton onClick={onAddTask}>+ タスクの追加</AddButton>
+        <DuplicateButton onClick={onDuplicateTasks} disabled={isDuplicateDisabled}>
+          タスクの複製
+        </DuplicateButton>
+        <DeleteButton onClick={onDeleteTasks} disabled={selectedTaskIds.size === 0}>
+          タスクの削除 ({selectedTaskIds.size})
+        </DeleteButton>
       </FooterActionContainer>
     </TableContainer>
   );

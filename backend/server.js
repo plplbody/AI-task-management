@@ -74,6 +74,57 @@ app.post('/api/tasks/delete', async (req, res) => {
   }
 });
 
+// Duplicate multiple tasks
+app.post('/api/tasks/duplicate', async (req, res) => {
+  const { ids } = req.body;
+  if (!ids || ids.length === 0) {
+    return res.status(400).send('No task IDs provided.');
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    const duplicatedTasks = [];
+    for (const id of ids) {
+      // 1. Duplicate the main task
+      const taskResult = await client.query('SELECT * FROM tasks WHERE id = $1', [id]);
+      const originalTask = taskResult.rows[0];
+      if (!originalTask) continue;
+
+      const newTaskId = `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      const newTaskTitle = `${originalTask.title} (Copy)`;
+      
+      const duplicatedTaskResult = await client.query(
+        'INSERT INTO tasks (id, title, status, assignee, planned_start_date, planned_effort, actual_effort) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+        [newTaskId, newTaskTitle, originalTask.status, originalTask.assignee, originalTask.planned_start_date, originalTask.planned_effort, originalTask.actual_effort]
+      );
+      duplicatedTasks.push(duplicatedTaskResult.rows[0]);
+
+      // 2. Duplicate subtasks
+      const subtasksResult = await client.query('SELECT * FROM subtasks WHERE task_id = $1', [id]);
+      const originalSubtasks = subtasksResult.rows;
+
+      for (const subtask of originalSubtasks) {
+        const newSubtaskId = `subtask-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        await client.query(
+          'INSERT INTO subtasks (id, task_id, title, completed) VALUES ($1, $2, $3, $4)',
+          [newSubtaskId, newTaskId, subtask.title, subtask.completed]
+        );
+      }
+    }
+
+    await client.query('COMMIT');
+    res.status(201).json(duplicatedTasks);
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error(err);
+    res.status(500).send('Server error');
+  } finally {
+    client.release();
+  }
+});
+
 // ----------------------------------------------------------------
 // Subtasks API
 // ----------------------------------------------------------------
@@ -135,36 +186,7 @@ app.delete('/api/subtasks/:id', async (req, res) => {
 });
 
 
-// ----------------------------------------------------------------
-// Table Headers API
-// ----------------------------------------------------------------
 
-// Get all table headers
-app.get('/api/headers', async (req, res) => {
-  try {
-    const result = await pool.query('SELECT * FROM table_headers ORDER BY id');
-    res.json(result.rows);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server error');
-  }
-});
-
-// Update a table header
-app.put('/api/headers/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { label } = req.body;
-    const result = await pool.query(
-      'UPDATE table_headers SET label = $1 WHERE id = $2 RETURNING *',
-      [label, id]
-    );
-    res.json(result.rows[0]);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server error');
-  }
-});
 
 
 app.listen(port, () => {

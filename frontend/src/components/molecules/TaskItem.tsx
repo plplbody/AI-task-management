@@ -17,6 +17,11 @@ const SubtaskToggleButton = styled(Button)`
   color: #5F5F5F;
   padding: 4px 8px;
   font-size: 0.75rem;
+
+  &:hover {
+    background-color: #E9ECEF;
+    opacity: 1;
+  }
 `;
 
 interface Header {
