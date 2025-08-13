@@ -16,7 +16,7 @@
 
 ## 2. システム概要 (System Overview)
 
-タスクの進捗管理を行うための、シングルページアプリケーション（SPA）です。主な機能として、タスクの一覧表示、インラインでのタスク編集、新規タスクの追加、複数タスクの一括削除、そして**各タスクに紐づくサブタスクの管理機能**を提供します。
+タスクの進捗管理を行うための、シングルページアプリケーション（SPA）です。主な機能として、タスクの一覧表示、インラインでのタスク編集、新規タスクの追加、複数タスクの一括削除、複数タスクの複製、そして**各タスクに紐づくサブタスクの管理機能**を提供します。
 
 ## 3. アーキテクチャ (Architecture)
 
@@ -60,26 +60,26 @@ graph TD
 
 -   **`TaskManagementPage.tsx`**
     -   **責務**: アプリケーション全体の状態（タスク一覧、選択中のタスクID、ローディング状態など）をすべて保持する、唯一の状態管理コンポーネントです。
-    -   **役割**: バックエンドとのAPI通信をすべて担当し、その結果を自身のstateとして保持します。タスクの追加・更新・削除といったロジック（イベントハンドラ）もここで定義し、子コンポーネントには関数としてpropsで渡します。
+    -   **役割**: バックエンドとのAPI通信をすべて担当し、その結果を自身のstateとして保持します。タスクの追加・更新・削除・複製といったロジック（イベントハンドラ）もここで定義し、子コンポーネントには関数としてpropsで渡します。
 
 #### Organisms
 
 -   **`PageHeader.tsx`**: ページ上部に表示されるヘッダー。アプリケーションのタイトルを表示します。
 -   **`TaskList.tsx`**
-    -   **責務**: `TaskManagementPage.tsx`から受け取ったタスクデータをレイアウトし、テーブルとして表示することに専念します。
+    -   **責務**: `TaskManagementPage.tsx`から受け取ったタスクデータをレイアウトし、テーブルとして表示することに専念します。タスクの一括選択、削除、複製機能も提供します。
     -   **役割**: 自身ではAPI通信を行いません。ユーザーのアクション（ボタンクリックなど）が発生すると、propsで渡された`TaskManagementPage.tsx`の関数を呼び出すだけです。
 
 #### Molecules
 
 -   **`CustomStatusSelect.tsx`**: タスクのステータスを選択するためのドロップダウン。
 -   **`TaskItem.tsx`**
-    -   **責務**: 1つのタスク行の表示と、その行内での編集機能に専念します。
+    -   **責務**: 1つのタスク行の表示と、その行内での編集機能に専念します。サブタスクの表示/非表示切り替え、およびサブタスクリストの管理も行います。
     -   **役割**: propsで渡された1つのタスク情報を基に、各セルを描画します。入力が行われると、自身のstate (`editingTask`) を一時的に更新し、入力が完了（`onBlur`イベント）した時点で、propsで渡された`onUpdateTask`関数を呼び出して、親コンポーネントに変更を通知します。
 -   **`SubtaskItem.tsx`**
     -   **責務**: 1つのサブタスクの表示と、その行内での編集機能に専念します。
     -   **役割**: propsで渡された1つのサブタスク情報を基に、チェックボックスとタイトルを描画します。入力が行われると、propsで渡された`onUpdate`関数を呼び出して、親コンポーネントに変更を通知します。
 -   **`SubtaskList.tsx`**
-    -   **責務**: 特定のタスクに紐づくサブタスクのリスト表示と、新規サブタスクの追加機能に専念します。
+    -   **責務**: 特定のタスクに紐づくサブタスクのリスト表示と、新規サブタスクの追加、複数サブタスクの一括削除機能に専念します。
     -   **役割**: `SubtaskItem`コンポーネントを複数レンダリングし、サブタスクの追加・更新・削除に関するイベントハンドラを親コンポーネントから受け取り、子コンポーネントに渡します。
 
 #### Atoms
@@ -97,7 +97,7 @@ graph TD
 色は、ユーザーの注意を引きつけ、情報を伝達し、アクションを促すための重要な要素です。
 
 *   **Primary (プライマリー)**
-    *   `#4472C4` (濃い青): 主要なアクション、ヘッダー、フォーカス時のインジケーターなど、最も目立たせたい要素に使用します。
+    *   `#425679` (濃い青): 主要なアクション、ヘッダー、フォーカス時のインジケーターなど、最も目立たせたい要素に使用します。
     *   使用例: ページヘッダー、テーブルヘッダー
 *   **Secondary (セカンダリー)**
     *   `#E9ECEF` (グレー): 補足的な情報や、非アクティブな状態を示すために使用します。
@@ -145,7 +145,11 @@ graph TD
       id: string;
       task_id: string;
       title: string;
-      completed: boolean;
+      status: 'Todo' | 'In Progress' | 'Done';
+      assignee?: string;
+      planned_start_date?: string;
+      planned_effort?: number;
+      actual_effort?: number;
     }
     ```
 
@@ -162,15 +166,29 @@ graph TD
 
 #### Tasks
 *   `GET /api/tasks`: 全タスクを取得。
-*   `POST /api/tasks`: 新規タスクを作成。
+*   `POST /api/tasks`: 新規タスクを作成。リクエストボディは不要。
+    *   レスポンス: 作成されたタスクオブジェクト。
 *   `PUT /api/tasks/:id`: 既存タスクを更新。
+    *   リクエストボディ: `title`, `status`, `assignee`, `planned_start_date`, `planned_effort`, `actual_effort` のいずれか、またはすべて。
+    *   レスポンス: 更新されたタスクオブジェクト。
 *   `POST /api/tasks/delete`: 複数タスクを一括削除。
+    *   リクエストボディ: `ids`: 削除するタスクIDの配列。
+    *   レスポンス: ステータス204 (No Content)。
+*   `POST /api/tasks/duplicate`: 複数タスクを複製。関連するサブタスクも複製される。
+    *   リクエストボディ: `ids`: 複製するタスクIDの配列。
+    *   レスポンス: 複製されたタスクオブジェクトの配列。
 
 #### Subtasks
 *   `GET /api/tasks/:taskId/subtasks`: 特定のタスクに紐づく全サブタスクを取得。
+    *   レスポンス: サブタスクオブジェクトの配列。
 *   `POST /api/subtasks`: 新規サブタスクを作成。
-*   `PUT /api/subtasks/:id`: 既存サブタスクを更新（タイトル、完了状態）。
+    *   リクエストボディ: `task_id` (必須), `title` (必須), `status`, `assignee`, `planned_start_date`, `planned_effort`, `actual_effort`。
+    *   レスポンス: 作成されたサブタスクオブジェクト。
+*   `PUT /api/subtasks/:id`: 既存サブタスクを更新。
+    *   リクエストボディ: `title`, `status`, `assignee`, `planned_start_date`, `planned_effort`, `actual_effort` のいずれか、またはすべて。
+    *   レスポンス: 更新されたサブタスクオブジェクト。
 *   `DELETE /api/subtasks/:id`: サブタスクを削除。
+    *   レスポンス: ステータス204 (No Content)。
 
 ## 6. データベース (db)
 
@@ -198,7 +216,11 @@ graph TD
     CREATE TABLE subtasks (
         id VARCHAR(255) PRIMARY KEY,
         title VARCHAR(255) NOT NULL,
-        completed BOOLEAN NOT NULL DEFAULT FALSE,
+        status VARCHAR(255) NOT NULL DEFAULT 'Todo',
+        assignee VARCHAR(255),
+        planned_start_date DATE,
+        planned_effort INT,
+        actual_effort INT,
         task_id VARCHAR(255) NOT NULL,
         FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
     );
