@@ -180,18 +180,18 @@ function TaskManagementPage() {
     setExpandedTasks(newExpandedTasks);
   }, [expandedTasks, tasks]);
 
-  const handleAddSubtask = async (taskId: string, title: string) => {
+  const handleAddSubtask = async (taskId: string, newSubtask: Partial<Subtask>) => {
     try {
       const response = await fetch('http://localhost:3001/api/subtasks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ task_id: taskId, title }),
+        body: JSON.stringify({ task_id: taskId, ...newSubtask }),
       });
       if (!response.ok) throw new Error('Failed to add subtask.');
-      const newSubtask = await response.json();
+      const addedSubtask = await response.json();
       setTasks(prevTasks => prevTasks.map(task => 
         task.id === taskId 
-          ? { ...task, subtasks: [...(task.subtasks || []), newSubtask] } 
+          ? { ...task, subtasks: [...(task.subtasks || []), addedSubtask] } 
           : task
       ));
     } catch (error) {

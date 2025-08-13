@@ -2,50 +2,88 @@ import React from 'react';
 import styled from 'styled-components';
 import type { Subtask } from '../../types';
 import { Input } from '../atoms/Input';
-import { Button } from '../atoms/Button';
+import CustomStatusSelect from './CustomStatusSelect';
 
-const SubtaskItemContainer = styled.div`
-  display: flex;
-  align-items: center;
-  padding: 4px 0;
+const Td = styled.td`
+  padding: 12px 20px;
+  border-bottom: 1px solid #DEE2E6;
+  vertical-align: middle;
 `;
 
 const Checkbox = styled.input`
   margin-right: 10px;
 `;
 
+interface Header { // Added
+  id: number;
+  column_key: string;
+  label: string;
+}
+
 interface SubtaskItemProps {
   subtask: Subtask;
   onUpdate: (subtask: Subtask) => void;
-  onDelete: (subtaskId: string) => void;
   onSelect: (subtaskId: string, isSelected: boolean) => void;
   isSelected: boolean;
+  headers: Header[]; // Added
 }
 
-const SubtaskItem: React.FC<SubtaskItemProps> = ({ subtask, onUpdate, onDelete, onSelect, isSelected }) => {
-  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onUpdate({ ...subtask, title: e.target.value });
+const SubtaskItem: React.FC<SubtaskItemProps> = ({ subtask, onUpdate, onSelect, isSelected, headers }) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    const originalValue = subtask[name as keyof Subtask];
+    const isNumber = typeof originalValue === 'number';
+
+    onUpdate({
+      ...subtask,
+      [name]: isNumber ? (value === '' ? undefined : Number(value)) : value,
+    });
   };
 
-  const handleCompletedChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onUpdate({ ...subtask, completed: e.target.checked });
+  const handleStatusChange = (newStatus: Subtask['status']) => {
+    onUpdate({ ...subtask, status: newStatus });
   };
 
   const handleSelectionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onSelect(subtask.id, e.target.checked);
   };
 
-  return (
-    <SubtaskItemContainer>
-      <Checkbox type="checkbox" checked={isSelected} onChange={handleSelectionChange} />
+  const renderCell = (header: Header) => {
+    const columnKey = header.column_key;
+
+    const key = columnKey as keyof Subtask;
+    const value = subtask[key];
+
+    if (columnKey === 'status') {
+      return (
+        <CustomStatusSelect
+          value={value as Subtask['status']}
+          onChange={handleStatusChange}
+        />
+      );
+    }
+
+    return (
       <Input
-        type="text"
-        value={subtask.title}
-        onChange={handleTitleChange}
-        onBlur={() => onUpdate(subtask)} // Save on blur
-        style={{ flex: 1, fontSize: '0.9rem', padding: '4px 8px' }}
+        type={columnKey.includes('date') ? 'date' : typeof subtask[key] === 'number' ? 'number' : 'text'}
+        name={columnKey}
+        value={typeof value === 'string' || typeof value === 'number' ? value : ''}
+        onChange={handleChange}
       />
-    </SubtaskItemContainer>
+    );
+  };
+
+  return (
+    <tr>
+      <Td>
+        <Checkbox type="checkbox" checked={isSelected} onChange={handleSelectionChange} />
+      </Td>
+      {headers
+        .filter(h => h.column_key !== 'select' && h.column_key !== 'subtask_toggle') // Filter out 'select' and 'subtask_toggle' columns
+        .map(header => (
+          <Td key={header.id}>{renderCell(header)}</Td>
+        ))}
+    </tr>
   );
 };
 

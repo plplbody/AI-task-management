@@ -108,8 +108,8 @@ app.post('/api/tasks/duplicate', async (req, res) => {
       for (const subtask of originalSubtasks) {
         const newSubtaskId = `subtask-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
         await client.query(
-          'INSERT INTO subtasks (id, task_id, title, completed) VALUES ($1, $2, $3, $4)',
-          [newSubtaskId, newTaskId, subtask.title, subtask.completed]
+          'INSERT INTO subtasks (id, task_id, title, status, assignee, planned_start_date, planned_effort, actual_effort) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+          [newSubtaskId, newTaskId, subtask.title, subtask.status, subtask.assignee, subtask.planned_start_date, subtask.planned_effort, subtask.actual_effort]
         );
       }
     }
@@ -144,11 +144,11 @@ app.get('/api/tasks/:taskId/subtasks', async (req, res) => {
 // Create a new subtask
 app.post('/api/subtasks', async (req, res) => {
     try {
-        const { task_id, title } = req.body;
+        const { task_id, title, status, assignee, planned_start_date, planned_effort, actual_effort } = req.body;
         const newId = `subtask-${Date.now()}`;
         const result = await pool.query(
-            'INSERT INTO subtasks (id, task_id, title, completed) VALUES ($1, $2, $3, $4) RETURNING *',
-            [newId, task_id, title, false]
+            'INSERT INTO subtasks (id, task_id, title, status, assignee, planned_start_date, planned_effort, actual_effort) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
+            [newId, task_id, title, status || 'Todo', assignee, planned_start_date, planned_effort, actual_effort]
         );
         res.status(201).json(result.rows[0]);
     } catch (err) {
@@ -161,10 +161,10 @@ app.post('/api/subtasks', async (req, res) => {
 app.put('/api/subtasks/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { title, completed } = req.body;
+        const { title, status, assignee, planned_start_date, planned_effort, actual_effort } = req.body;
         const result = await pool.query(
-            'UPDATE subtasks SET title = $1, completed = $2 WHERE id = $3 RETURNING *',
-            [title, completed, id]
+            'UPDATE subtasks SET title = $1, status = $2, assignee = $3, planned_start_date = $4, planned_effort = $5, actual_effort = $6 WHERE id = $7 RETURNING *',
+            [title, status, assignee, planned_start_date, planned_effort, actual_effort, id]
         );
         res.json(result.rows[0]);
     } catch (err) {

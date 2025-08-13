@@ -131,12 +131,12 @@ const TaskItem: React.FC<TaskItemProps> = ({
             <SubtaskList
               taskId={task.id}
               subtasks={task.subtasks || []}
-              onAddSubtask={onAddSubtask}
+              onAddSubtask={(taskId, newSubtask) => onAddSubtask(taskId, newSubtask.title || '')}
               onUpdateSubtask={onUpdateSubtask}
-              onDeleteSubtask={onDeleteSubtask}
               onSelectSubtask={onSelectSubtask}
               onDeleteSelectedSubtasks={onDeleteSelectedSubtasks}
               selectedSubtaskIds={selectedSubtaskIds}
+              headers={headers}
             />
           </Td>
         </tr>
