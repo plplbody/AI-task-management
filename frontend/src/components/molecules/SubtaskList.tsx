@@ -48,12 +48,12 @@ interface Header { // Copied from TaskList.tsx
 interface SubtaskListProps {
   taskId: string;
   subtasks: Subtask[];
-  onAddSubtask: (taskId: string, newSubtask: Partial<Subtask>) => void; // Changed type
+  onAddSubtask: (taskId: string) => void;
   onUpdateSubtask: (subtask: Subtask) => void;
   onSelectSubtask: (taskId: string, subtaskId: string, isSelected: boolean) => void;
   onDeleteSelectedSubtasks: (taskId: string) => void;
   selectedSubtaskIds: Map<string, Set<string>>;
-  headers: Header[]; // Added
+  headers: Header[];
 }
 
 const SubtaskList: React.FC<SubtaskListProps> = ({ 
@@ -64,7 +64,7 @@ const SubtaskList: React.FC<SubtaskListProps> = ({
   onSelectSubtask, 
   onDeleteSelectedSubtasks, 
   selectedSubtaskIds,
-  headers // Added
+  headers
 }) => {
   const getColumnWidth = (columnKey: string): string => { // Copied from TaskList.tsx
     switch (columnKey) {
@@ -119,7 +119,7 @@ const SubtaskList: React.FC<SubtaskListProps> = ({
         </tbody>
       </StyledTable>
       <FooterActionContainer>
-        <AddButton onClick={() => onAddSubtask(taskId, { title: 'New Subtask', status: 'Todo' })}>+ サブタスクの追加</AddButton>
+        <AddButton onClick={() => onAddSubtask(taskId)}>+ サブタスクの追加</AddButton>
         <DeleteButton 
           onClick={() => onDeleteSelectedSubtasks(taskId)} 
           disabled={!selectedSubtaskIds || !selectedSubtaskIds.has(taskId) || selectedSubtaskIds.get(taskId)?.size === 0}

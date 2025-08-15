@@ -37,7 +37,7 @@ interface TaskItemProps {
   onUpdateTask: (task: Task) => void;
   onSelect: (id: string) => void;
   onToggleSubtasks: (taskId: string) => void;
-  onAddSubtask: (taskId: string, title: string) => void;
+  onAddSubtask: (taskId: string) => void;
   onUpdateSubtask: (subtask: Subtask) => void;
   onDeleteSubtask: (subtaskId: string) => void;
   showSubtasks: boolean;
@@ -131,7 +131,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
             <SubtaskList
               taskId={task.id}
               subtasks={task.subtasks || []}
-              onAddSubtask={(taskId, newSubtask) => onAddSubtask(taskId, newSubtask.title || '')}
+              onAddSubtask={onAddSubtask}
               onUpdateSubtask={onUpdateSubtask}
               onSelectSubtask={onSelectSubtask}
               onDeleteSelectedSubtasks={onDeleteSelectedSubtasks}

@@ -5,6 +5,8 @@ import PageHeader from '../components/organisms/PageHeader';
 import type { Task, Subtask } from '../types';
 import { AppContainer } from '../AppStyles';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 const MainContent = styled.main`
   padding: 2rem;
 `;
@@ -32,7 +34,7 @@ function TaskManagementPage() {
     setLoading(true);
     setError(null);
     try {
-      const tasksResponse = await fetch('http://localhost:3001/api/tasks');
+      const tasksResponse = await fetch(`${API_BASE_URL}/api/tasks`);
 
       if (!tasksResponse.ok) {
         throw new Error('Failed to fetch data from the server.');
@@ -67,7 +69,7 @@ function TaskManagementPage() {
 
   const handleUpdateTask = async (updatedTask: Task) => {
     try {
-      const response = await fetch(`http://localhost:3001/api/tasks/${updatedTask.id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/tasks/${updatedTask.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedTask),
@@ -83,7 +85,7 @@ function TaskManagementPage() {
 
   const handleAddTask = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/tasks', { method: 'POST' });
+      const response = await fetch(`${API_BASE_URL}/api/tasks`, { method: 'POST' });
       if (!response.ok) throw new Error('Failed to add task.');
       const newTask = await response.json();
       setTasks(prevTasks => [...prevTasks, newTask]);
@@ -95,7 +97,7 @@ function TaskManagementPage() {
 
   const handleDeleteTasks = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/tasks/delete', {
+      const response = await fetch(`${API_BASE_URL}/api/tasks/delete`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ids: Array.from(selectedTaskIds) }),
@@ -112,7 +114,7 @@ function TaskManagementPage() {
   const handleDuplicateTasks = async () => {
     if (selectedTaskIds.size === 0) return;
     try {
-      const response = await fetch('http://localhost:3001/api/tasks/duplicate', {
+      const response = await fetch(`${API_BASE_URL}/api/tasks/duplicate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ids: Array.from(selectedTaskIds) }),
@@ -132,7 +134,7 @@ function TaskManagementPage() {
 
     try {
       for (const subtaskId of subtasksToDelete) {
-        const response = await fetch(`http://localhost:3001/api/subtasks/${subtaskId}`, { method: 'DELETE' });
+        const response = await fetch(`${API_BASE_URL}/api/subtasks/${subtaskId}`, { method: 'DELETE' });
         if (!response.ok) throw new Error(`Failed to delete subtask ${subtaskId}.`);
       }
       
@@ -167,7 +169,7 @@ function TaskManagementPage() {
       const task = tasks.find(t => t.id === taskId);
       if (task && !task.subtasks) {
         try {
-          const response = await fetch(`http://localhost:3001/api/tasks/${taskId}/subtasks`);
+          const response = await fetch(`${API_BASE_URL}/api/tasks/${taskId}/subtasks`);
           if (!response.ok) throw new Error('Failed to fetch subtasks.');
           const subtasks = await response.json();
           setTasks(prevTasks => prevTasks.map(t => t.id === taskId ? { ...t, subtasks } : t));
@@ -180,12 +182,12 @@ function TaskManagementPage() {
     setExpandedTasks(newExpandedTasks);
   }, [expandedTasks, tasks]);
 
-  const handleAddSubtask = async (taskId: string, newSubtask: Partial<Subtask>) => {
+  const handleAddSubtask = async (taskId: string) => {
     try {
-      const response = await fetch('http://localhost:3001/api/subtasks', {
+      const response = await fetch(`${API_BASE_URL}/api/subtasks`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ task_id: taskId, ...newSubtask }),
+        body: JSON.stringify({ task_id: taskId }),
       });
       if (!response.ok) throw new Error('Failed to add subtask.');
       const addedSubtask = await response.json();
@@ -202,7 +204,7 @@ function TaskManagementPage() {
 
   const handleUpdateSubtask = async (updatedSubtask: Subtask) => {
     try {
-      const response = await fetch(`http://localhost:3001/api/subtasks/${updatedSubtask.id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/subtasks/${updatedSubtask.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedSubtask),
@@ -222,7 +224,7 @@ function TaskManagementPage() {
 
   const handleDeleteSubtask = async (subtaskId: string) => {
     try {
-      const response = await fetch(`http://localhost:3001/api/subtasks/${subtaskId}`, { method: 'DELETE' });
+      const response = await fetch(`${API_BASE_URL}/api/subtasks/${subtaskId}`, { method: 'DELETE' });
       if (!response.ok) throw new Error('Failed to delete subtask.');
       setTasks(prevTasks => prevTasks.map(task => ({
         ...task,

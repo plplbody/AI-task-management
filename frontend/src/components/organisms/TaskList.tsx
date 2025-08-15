@@ -68,7 +68,7 @@ interface TaskListProps {
   setSelectedTaskIds: React.Dispatch<React.SetStateAction<Set<string>>>;
   expandedTasks: Set<string>;
   onToggleSubtasks: (taskId: string) => void;
-  onAddSubtask: (taskId: string, title: string) => void;
+  onAddSubtask: (taskId: string) => void;
   onUpdateSubtask: (subtask: Subtask) => void;
   onDeleteSubtask: (subtaskId: string) => void;
   onSelectSubtask: (taskId: string, subtaskId: string, isSelected: boolean) => void;

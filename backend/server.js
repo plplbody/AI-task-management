@@ -34,7 +34,7 @@ app.post('/api/tasks', async (req, res) => {
     const newId = `task-${Date.now()}`;
     const result = await pool.query(
       'INSERT INTO tasks (id, title, status) VALUES ($1, $2, $3) RETURNING *',
-      [newId, 'New Task', 'Todo']
+      [newId, '', 'Todo']
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
@@ -144,11 +144,11 @@ app.get('/api/tasks/:taskId/subtasks', async (req, res) => {
 // Create a new subtask
 app.post('/api/subtasks', async (req, res) => {
     try {
-        const { task_id, title, status, assignee, planned_start_date, planned_effort, actual_effort } = req.body;
+        const { task_id } = req.body;
         const newId = `subtask-${Date.now()}`;
         const result = await pool.query(
-            'INSERT INTO subtasks (id, task_id, title, status, assignee, planned_start_date, planned_effort, actual_effort) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
-            [newId, task_id, title, status || 'Todo', assignee, planned_start_date, planned_effort, actual_effort]
+            'INSERT INTO subtasks (id, task_id, title, status) VALUES ($1, $2, $3, $4) RETURNING *',
+            [newId, task_id, '', 'Todo']
         );
         res.status(201).json(result.rows[0]);
     } catch (err) {
